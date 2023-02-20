@@ -617,6 +617,7 @@ export const filterPosts = async (
     selfFilter,
     //galFilter,
     linkFilter,
+    nsfwPostFilter,
     imgPortraitFilter,
     imgLandscapeFilter,
     userPostType,
@@ -655,6 +656,10 @@ export const filterPosts = async (
       return false;
     }
     if (!readFilter && (await localRead.getItem(d?.name))) {
+      filtercount += 1;
+      return false;
+    }
+    if (!nsfwPostFilter && (d?.over_18)) {
       filtercount += 1;
       return false;
     }

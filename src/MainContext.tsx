@@ -263,6 +263,7 @@ export const MainProvider = ({ children }) => {
   const [galFilter, setGalFilter] = useState<boolean>();
   const [selfFilter, setSelfFilter] = useState<boolean>();
   const [linkFilter, setLinkFilter] = useState<boolean>();
+  const [nsfwPostFilter, setNsfwPostFilter] = useState<boolean>();
   // const [filterCount, setFilterCount] = useState(0);
   //advanced filters
   //'img' filters also apply to reddit videos since those have known res as well..
@@ -369,6 +370,9 @@ export const MainProvider = ({ children }) => {
         }
         setImgLandScapeFilter((l) => !l);
         break;
+      case "nsfw_filter":
+        setNsfwPostFilter((x) => !x);
+        break;
     }
   };
 
@@ -376,6 +380,7 @@ export const MainProvider = ({ children }) => {
   const applyFilters = (
     filters = {
       seenFilter,
+      nsfwPostFilter,
       readFilter,
       imgFilter,
       vidFilter,
@@ -390,27 +395,7 @@ export const MainProvider = ({ children }) => {
 
     setApplyFilters((f) => {
       //any filter on
-      const {
-        seenFilter,
-        readFilter,
-        imgFilter,
-        vidFilter,
-        selfFilter,
-        linkFilter,
-        imgPortraitFilter,
-        imgLandscapeFilter,
-      } = filters;
-      if (
-        seenFilter === false ||
-        readFilter === false ||
-        imgFilter === false ||
-        vidFilter === false ||
-        selfFilter === false ||
-        // !galFilter &&
-        linkFilter === false ||
-        imgPortraitFilter === false ||
-        imgLandscapeFilter === false
-      ) {
+      if (Object.values(filters).some(x => x === false)) {
         return Math.abs(f) + 1;
       }
       return (Math.abs(f) + 1) * -1;
@@ -546,75 +531,25 @@ export const MainProvider = ({ children }) => {
     const getSettings = async () => {
       //fall back to localstorage for legacy settings
       let fallback = false;
-      const loadNSFW = async () => {
-        let saved_nsfw = await localForage.getItem("nsfw");
-        if (saved_nsfw !== null) {
-          saved_nsfw === true ? setNSFW(true) : setNSFW(false);
-          localStorage.removeItem("nsfw");
-        } else {
-          fallback = true;
-          let local_nsfw = localStorage.getItem("nsfw");
-          local_nsfw?.includes("true") ? setNSFW(true) : setNSFW(false);
+      function loaderForLegacySetting(name: string, setter: Function, prefer: boolean = true): Promise {
+        return async () => {
+          let saved = await localForage.getItem(name);
+          if (saved !== null) {
+            saved === prefer ? setter(prefer) : setter(!prefer);
+            localStorage.removeItem(name);
+          } else {
+            fallback = true;
+            let local = localStorage.getItem(name);
+            local?.includes(prefer ? "true" : "false") ? setter(prefer) : setter(!prefer);
+          }
         }
-      };
+      }
 
-      const loadAutoplay = async () => {
-        let saved_autoplay = await localForage.getItem("autoplay");
-        if (saved_autoplay !== null) {
-          saved_autoplay === true ? setAutoplay(true) : setAutoplay(false);
-          localStorage.removeItem("autoplay");
-        } else {
-          fallback = true;
-          let local_autoplay = localStorage.getItem("autoplay");
-          local_autoplay?.includes("true")
-            ? setAutoplay(true)
-            : setAutoplay(false);
-        }
-      };
-
-      const loadHoverPlay = async () => {
-        let saved_hoverplay = await localForage.getItem("hoverplay");
-        if (saved_hoverplay !== null) {
-          saved_hoverplay === true ? setHoverPlay(true) : setHoverPlay(false);
-          localStorage.removeItem("hoverplay");
-        } else {
-          fallback = true;
-          let local_hoverplay = localStorage.getItem("hoverplay");
-          local_hoverplay?.includes("true")
-            ? setHoverPlay(true)
-            : setHoverPlay(false);
-        }
-      };
-
-      const loadMediaOnly = async () => {
-        let saved_mediaOnly: boolean = await localForage.getItem("mediaOnly");
-        if (saved_mediaOnly !== null) {
-          saved_mediaOnly === true ? setMediaOnly(true) : setMediaOnly(false);
-          localStorage.removeItem("mediaOnly");
-        } else {
-          fallback = true;
-          let local_mediaOnly = localStorage.getItem("mediaOnly");
-          local_mediaOnly?.includes("true")
-            ? setMediaOnly(true)
-            : setMediaOnly(false);
-        }
-      };
-
-      const audioOnHover = async () => {
-        let saved_audioOnHover = await localForage.getItem("audioOnHover");
-        if (saved_audioOnHover !== null) {
-          saved_audioOnHover === true
-            ? setaudioOnHover(true)
-            : setaudioOnHover(false);
-          localStorage.removeItem("audioOnHover");
-        } else {
-          fallback = true;
-          let local_audioOnHover = localStorage.getItem("audioOnHover");
-          local_audioOnHover?.includes("true")
-            ? setaudioOnHover(true)
-            : setaudioOnHover(false);
-        }
-      };
+      const loadNSFW = loaderForLegacySetting("nsfw", setNSFW);
+      const loadAutoplay = loaderForLegacySetting("autoplay", setAutoplay);
+      const loadHoverPlay = loaderForLegacySetting("hoverplay", setHoverPlay);
+      const loadMediaOnly = loaderForLegacySetting("mediaOnly", setMediaOnly);
+      const audioOnHover = loaderForLegacySetting("audioOnHover", setaudioOnHover);
 
       const columnOverride = async () => {
         let saved_columnOverride: number = await localForage.getItem(
@@ -636,65 +571,10 @@ export const MainProvider = ({ children }) => {
         }
       };
 
-      const savedWideUI = async () => {
-        let saved_saveWideUI = await localForage.getItem("saveWideUI");
-        if (saved_saveWideUI !== null) {
-          saved_saveWideUI === false
-            ? setSaveWideUI(false)
-            : setSaveWideUI(true);
-          localStorage.removeItem("saveWideUI");
-        } else {
-          fallback = true;
-          let local_saveWideUI = localStorage.getItem("saveWideUI");
-          local_saveWideUI?.includes("false")
-            ? setSaveWideUI(false)
-            : setSaveWideUI(true);
-        }
-      };
-
-      // const syncWideUI = async () => {
-      //   let saved_syncWideUI = await localForage.getItem("syncWideUI");
-      //   if (saved_syncWideUI !== null) {
-      //     saved_syncWideUI === false
-      //       ? setSyncWideUI(false)
-      //       : setSyncWideUI(true);
-      //     localStorage.removeItem("syncWideUI");
-      //   } else {
-      //     fallback = true;
-      //     let local_syncWideUI = localStorage.getItem("syncWideUI");
-      //     local_syncWideUI?.includes("false")
-      //       ? setSyncWideUI(false)
-      //       : setSyncWideUI(true);
-      //   }
-      // };
-
-      const postWideUI = async () => {
-        let saved_postWideUI = await localForage.getItem("postWideUI");
-        if (saved_postWideUI !== null) {
-          saved_postWideUI === false
-            ? setPostWideUI(false)
-            : setPostWideUI(true);
-          localStorage.removeItem("postWideUI");
-        } else {
-          fallback = true;
-          let local_postWideUI = localStorage.getItem("postWideUI");
-          local_postWideUI?.includes("false")
-            ? setPostWideUI(false)
-            : setPostWideUI(true);
-        }
-      };
-
-      const loadWideUI = async () => {
-        let saved_wideUI = await localForage.getItem("wideUI");
-        if (saved_wideUI !== null) {
-          saved_wideUI === false ? setWideUI(false) : setWideUI(true);
-          localStorage.removeItem("wideUI");
-        } else {
-          fallback = true;
-          let local_wideUI = localStorage.getItem("wideUI");
-          local_wideUI?.includes("false") ? setWideUI(false) : setWideUI(true);
-        }
-      };
+      const savedWideUI = loaderForLegacySetting("saveWideUI", setSaveWideUI, prefers = false);
+      // const syncWideUI = loaderForLegacySetting("syncWideUI", setSyncWideUI, prefers = false);
+      const postWideUI = loaderForLegacySetting("postWideUI", setPostWideUI, prefers = false);
+      const loadWideUI = loaderForLegacySetting("wideUI", setWideUI, prefers = false);
 
       const loadCardStyle = async () => {
         let saved_cardStyle: string = await localForage.getItem("cardStyle");
@@ -730,284 +610,95 @@ export const MainProvider = ({ children }) => {
       };
 
       let filters = {
-        seenFilter: true,
-        readFilter: true,
         imgFilter: true,
-        vidFilter: true,
-        selfFilter: true,
-        linkFilter: true,
-        imgPortraitFilter: true,
         imgLandscapeFilter: true,
+        imgPortraitFilter: true,
+        linkFilter: true,
+        nsfwPostFilter: true,
+        readFilter: true,
+        seenFilter: true, // new filter
+        selfFilter: true,
+        vidFilter: true,
       };
 
-      const loadImgFilter = async () => {
-        let saved_imgFilter = await localForage.getItem("imgFilter");
-        if (saved_imgFilter !== null) {
-          if (saved_imgFilter === false) {
-            filters.imgFilter = false;
-            setImgFilter(false);
+      function loaderForLegacyFilter (name: string, setter: Function): Promise {
+        return async () => {
+          let saved_value = await localForage.getItem(name);
+          if (saved_value !== null) {
+            if (saved_value === false) {
+              filters[name] = false;
+              setter(false);
+            } else {
+              setter(true);
+            }
+            localStorage.removeItem(name);
           } else {
-            setImgFilter(true);
+            fallback = true;
+            let local_value = localStorage.getItem(name);
+            if (local_value?.includes("false")) {
+              filters[name] = false;
+              setter(false);
+            } else {
+              setter(true);
+            }
           }
-          localStorage.removeItem("imgFilter");
-        } else {
-          fallback = true;
-          let local_imgFilter = localStorage.getItem("imgFilter");
-          if (local_imgFilter?.includes("false")) {
-            filters.imgFilter = false;
-            setImgFilter(false);
-          } else {
-            setImgFilter(true);
-          }
-        }
-      };
-      const loadImgPortraitFilter = async () => {
-        let saved_imgPortraitFilter = await localForage.getItem(
-          "imgPortraitFilter"
-        );
-        if (saved_imgPortraitFilter !== null) {
-          if (saved_imgPortraitFilter === false) {
-            filters.imgPortraitFilter = false;
-            setImgPortraitFilter(false);
-          } else {
-            setImgPortraitFilter(true);
-          }
-          localStorage.removeItem("imgPortraitFilter");
-        } else {
-          fallback = true;
-          let local_imgPortraitFilter =
-            localStorage.getItem("imgPortraitFilter");
-          if (local_imgPortraitFilter?.includes("false")) {
-            setImgPortraitFilter(false);
-            filters.imgPortraitFilter = false;
-          } else {
-            setImgPortraitFilter(true);
-          }
-        }
-      };
+        };
+      }
 
-      const loadImgLandscapeFilter = async () => {
-        let saved_imgLandscapeFilter = await localForage.getItem(
-          "imgLandscapeFilter"
-        );
-        if (saved_imgLandscapeFilter !== null) {
-          if (saved_imgLandscapeFilter === false) {
-            filters.imgLandscapeFilter = false;
-            setImgLandScapeFilter(false);
-          } else {
-            setImgLandScapeFilter(true);
-          }
-          localStorage.removeItem("imgLandscapeFilter");
-        } else {
-          fallback = true;
-          let local_imgLandscapeFilter =
-            localStorage.getItem("imgLandscapeFilter");
-          if (local_imgLandscapeFilter?.includes("false")) {
-            filters.imgLandscapeFilter = false;
-            setImgLandScapeFilter(false);
-          } else {
-            setImgLandScapeFilter(true);
-          }
-        }
-      };
-
-      const loadVidFilter = async () => {
-        let saved_vidFilter = await localForage.getItem("vidFilter");
-        if (saved_vidFilter !== null) {
-          if (saved_vidFilter === false) {
-            filters.vidFilter = false;
-            setVidFilter(false);
-          } else {
-            setVidFilter(true);
-          }
-          localStorage.removeItem("vidFilter");
-        } else {
-          fallback = true;
-          let local_vidFilter = localStorage.getItem("vidFilter");
-          if (local_vidFilter?.includes("false")) {
-            filters.vidFilter = false;
-            setVidFilter(false);
-          } else {
-            setVidFilter(true);
-          }
-        }
-      };
-
-      const loadLinkFilter = async () => {
-        let saved_linkFilter = await localForage.getItem("linkFilter");
-        if (saved_linkFilter !== null) {
-          if (saved_linkFilter === false) {
-            filters.linkFilter = false;
-            setLinkFilter(false);
-          } else {
-            setLinkFilter(true);
-          }
-          localStorage.removeItem("linkFilter");
-        } else {
-          fallback = true;
-          let local_linkFilter = localStorage.getItem("linkFilter");
-          if (local_linkFilter?.includes("false")) {
-            filters.linkFilter = false;
-            setLinkFilter(false);
-          } else {
-            setLinkFilter(true);
-          }
-        }
-      };
-
-      const loadSelfFilter = async () => {
-        let saved_selfFilter = await localForage.getItem("selfFilter");
-        if (saved_selfFilter !== null) {
-          if (saved_selfFilter === false) {
-            filters.selfFilter = false;
-            setSelfFilter(false);
-          } else {
-            setSelfFilter(true);
-          }
-          localStorage.removeItem("selfFilter");
-        } else {
-          fallback = true;
-          let local_selfFilter = localStorage.getItem("selfFilter");
-          if (local_selfFilter?.includes("false")) {
-            filters.selfFilter = false;
-            setSelfFilter(false);
-          } else {
-            setSelfFilter(true);
-          }
-        }
-      };
-
-      const loadReadFilter = async () => {
-        let saved_readFilter = await localForage.getItem("readFilter");
-        if (saved_readFilter !== null) {
-          if (saved_readFilter === false) {
-            filters.readFilter = false;
-            setReadFilter(false);
-          } else {
-            setReadFilter(true);
-          }
-          localStorage.removeItem("readFilter");
-        } else {
-          fallback = true;
-          let local_readFilter = localStorage.getItem("readFilter");
-          if (local_readFilter?.includes("false")) {
-            filters.readFilter = false;
-            setReadFilter(false);
-          } else {
-            setReadFilter(true);
-          }
-        }
-      };
+      const loadImgFilter = loaderForLegacyFilter("imgFilter", setImgFilter);
+      const loadImgLandscapeFilter = loaderForLegacyFilter("imgLandscapeFilter", setImgLandScapeFilter);
+      const loadImgPortraitFilter = loaderForLegacyFilter("imgPortraitFilter", setImgPortraitFilter);
+      const loadLinkFilter = loaderForLegacyFilter("linkFilter", setLinkFilter);
+      const loadReadFilter = loaderForLegacyFilter("readFilter", setReadFilter);
+      const loadSelfFilter = loaderForLegacyFilter("selfFilter", setSelfFilter);
+      const loadVidFilter = loaderForLegacyFilter("vidFilter", setVidFilter);
 
       //new setting
-      const loadSeenFilter = async () => {
-        let saved = await localForage.getItem("seenFilter");
-        if (saved === false) {
-          filters.seenFilter = false;
-          setSeenFilter(false);
-        } else {
-          setSeenFilter(true);
+      function loaderForFilter (name: string, setter: Function): Promise {
+        return async () => {
+          let saved = await localForage.getItem(name);
+          if (saved === false) {
+            filters[name] = false;
+            setter(false);
+          } else {
+            setter(true);
+          }
         }
-      };
+      }
+
+      const loadSeenFilter = loaderForFilter("seenFilter", setSeenFilter);
+      const loadNsfwPostFilter = loaderForFilter("nsfwPostFilter", setNsfwPostFilter);
 
       //new settings don't need localstorage fallback..
-      const loadRibbonCollapseOnly = async () => {
-        let saved = await localForage.getItem("ribbonCollapseOnly");
-        saved === true
-          ? setRibbonCollapseOnly(true)
-          : setRibbonCollapseOnly(false);
-      };
-      const loadCollapseChildrenOnly = async () => {
-        let saved_collapseChildrenOnly = await localForage.getItem(
-          "collapseChildrenOnly"
-        );
-        saved_collapseChildrenOnly === true
-          ? setCollapseChildrenOnly(true)
-          : setCollapseChildrenOnly(false);
-      };
-      const loadDefaultCollapseChildren = async () => {
-        let saved_defaultCollapseChildren = await localForage.getItem(
-          "defaultCollapseChildren"
-        );
-        saved_defaultCollapseChildren === true
-          ? setDefaultCollapseChildren(true)
-          : setDefaultCollapseChildren(false);
-      };
-      const loadShowUserIcons = async () => {
-        let saved_loadShowUserIcons = await localForage.getItem(
-          "showUserIcons"
-        );
-        saved_loadShowUserIcons === false
-          ? setShowUserIcons(false)
-          : setShowUserIcons(true);
-      };
-      const loadShowAwardings = async () => {
-        let saved_showAwardings = await localForage.getItem("showAwardings");
-        saved_showAwardings === false
-          ? setShowAwardings(false)
-          : setShowAwardings(true);
-      };
-      const loadShowFlairs = async () => {
-        let saved_showFlairs = await localForage.getItem("showFlairs");
-        saved_showFlairs === false ? setShowFlairs(false) : setShowFlairs(true);
-      };
-      const loadShowUserFlairs = async () => {
-        let saved_showUserFlairs = await localForage.getItem("showUserFlairs");
-        saved_showUserFlairs === false
-          ? setShowUserFlairs(false)
-          : setShowUserFlairs(true);
-      };
-      const loadExpandedSubPane = async () => {
-        let saved = await localForage.getItem("expandedSubPane");
-        saved === true ? setExpandedSubPane(true) : setExpandedSubPane(false);
-      };
-      const loadInfiniteLoading = async () => {
-        let saved = await localForage.getItem("infiniteLoading");
-        saved === false ? setInfinitLoading(false) : setInfinitLoading(true);
-      };
-      const loadDimRead = async () => {
-        let saved = await localForage.getItem("dimRead");
-        saved === false ? setDimRead(false) : setDimRead(true);
-      };
-      const loadAutoRead = async () => {
-        let saved = await localForage.getItem("autoRead");
-        saved === false ? setAutoRead(false) : setAutoRead(true);
-      };
-      const loadAutoSeen = async () => {
-        let saved = await localForage.getItem("autoSeen");
-        saved === false ? setAutoSeen(false) : setAutoSeen(true);
-      };
-      const loadDisableEmbeds = async () => {
-        let saved = await localForage.getItem("disableEmbeds");
-        saved === true ? setDisableEmbeds(true) : setDisableEmbeds(false);
-      };
-      const loadPreferEmbeds = async () => {
-        let saved = await localForage.getItem("preferEmbeds");
-        saved === true ? setPreferEmbeds(true) : setPreferEmbeds(false);
-      };
-      const loadEmbedsEverywhere = async () => {
-        let saved = await localForage.getItem("embedsEverywhere");
-        saved === true ? setEmbedsEveryWhere(true) : setEmbedsEveryWhere(false);
-      };
+      function loaderForSettingBool(name: string, setter: Function, fallback: boolean): Promise {
+        return async () => {
+          let saved = await localForage.getItem(name);
+          saved === !fallback
+            ? setter(!fallback)
+            : setter(fallback);
+        };
+      }
 
-      const autoRefreshFeed = async () => {
-        let saved = await localForage.getItem("autoRefreshFeed");
-        saved === false ? setAutoRefreshFeed(false) : setAutoRefreshFeed(true);
-      };
-      const autoRefreshComments = async () => {
-        let saved = await localForage.getItem("autoRefreshComments");
-        saved === false
-          ? setAutoRefreshComments(false)
-          : setAutoRefreshComments(true);
-      };
-      const askToUpdateFeed = async () => {
-        let saved = await localForage.getItem("askToUpdateFeed");
-        saved === false ? setAskToUpdateFeed(false) : setAskToUpdateFeed(true);
-      };
-      const refreshOnFocus = async () => {
-        let saved = await localForage.getItem("refreshOnFocus");
-        saved === false ? setRefreshOnFocus(false) : setRefreshOnFocus(true);
-      };
+      const loadRibbonCollapseOnly = loaderForSettingBool("ribbonCollapseOnly", setRibbonCollapseOnly, false);
+      const loadCollapseChildrenOnly = loaderForSettingBool("collapseChildrenOnly", setCollapseChildrenOnly, false);
+      const loadDefaultCollapseChildren = loaderForSettingBool("defaultCollapseChildren", setDefaultCollapseChildren, false);
+      const loadShowUserIcons = loaderForSettingBool("showUserIcons", setShowUserIcons, true);
+      const loadShowAwardings = loaderForSettingBool("showAwardings", setShowAwardings, true);
+      const loadShowFlairs = loaderForSettingBool("showFlairs", setShowFlairs, true);
+      const loadShowUserFlairs = loaderForSettingBool("showUserFlairs", setShowUserFlairs, true);
+      const loadExpandedSubPane = loaderForSettingBool("expandedSubPane", setExpandedSubPane, false);
+      const loadInfiniteLoading = loaderForSettingBool("infiniteLoading", setInfinitLoading, true);
+      const loadDimRead = loaderForSettingBool("dimRead", setDimRead, true);
+      const loadAutoRead = loaderForSettingBool("autoRead", setAutoRead, true);
+      const loadAutoSeen = loaderForSettingBool("autoSeen", setAutoSeen, true);
+      const loadDisableEmbeds = loaderForSettingBool("disableEmbeds", setDisableEmbeds, false);
+      const loadPreferEmbeds = loaderForSettingBool("preferEmbeds", setPreferEmbeds, false);
+      const loadEmbedsEverywhere = loaderForSettingBool("embedsEverywhere", setEmbedsEveryWhere, false);
+      const autoRefreshFeed = loaderForSettingBool("autoRefreshFeed", setAutoRefreshFeed, true);
+      const autoRefreshComments = loaderForSettingBool("autoRefreshComments", setAutoRefreshComments, true);
+      const askToUpdateFeed = loaderForSettingBool("askToUpdateFeed", setAskToUpdateFeed, true);
+      const refreshOnFocus = loaderForSettingBool("refreshOnFocus", setRefreshOnFocus, true);
+
       const loadVolume = async () => {
         let saved = await localForage.getItem("volume");
         if (saved >= 0 && saved <= 1 && typeof saved === "number") {
@@ -1054,163 +745,72 @@ export const MainProvider = ({ children }) => {
           setAutoPlayInterval(5);
         }
       };
-      const waitForVidInterval = async () => {
-        let saved = (await localForage.getItem(
-          "waitForVidInterval"
-        )) as boolean;
-        if (saved === false) {
-          setWaitForVidInterval(false);
-        } else {
-          setWaitForVidInterval(true);
-        }
-      };
-      const loadUniformHeights = async () => {
-        let s = await localForage.getItem("uniformHeights");
-        if (s === false) {
-          setUniformHeights(false);
-        } else {
-          setUniformHeights(true);
-        }
-      };
-      const compactLinkPics = async () => {
-        let saved = await localForage.getItem("compactLinkPics");
-        if (saved === false) {
-          setCompactLinkPics(saved);
-        } else {
-          setCompactLinkPics(true);
-        }
-      };
-      const autoHideNav = async () => {
-        let saved = await localForage.getItem("autoHideNav");
-        if (saved === true) {
-          setAutoHideNav(saved);
-        } else {
-          setAutoHideNav(false);
-        }
-      };
-      const preferSideBySide = async() => {
-        let saved = await localForage.getItem("preferSideBySide");
-        if (saved === true) {
-          setPreferSideBySide(saved);
-        } else {
-          setPreferSideBySide(false);
-        }
-      }
-      const disableSideBySide = async() => {
-        let saved = await localForage.getItem("disableSideBySide");
-        if (saved === true) {
-          setDisableSideBySide(saved);
-        } else {
-          setDisableSideBySide(false);
-        }
-      }
-      const autoCollapseComments = async() => {
-        let saved = await localForage.getItem("autoCollapseComments");
-        if (saved === false) {
-          setAutoCollapseComments(saved);
-        } else {
-          setAutoCollapseComments(true);
-        }
-      }
+
+      const waitForVidInterval = loaderForSettingBool("waitForVidInterval", setWaitForVidInterval, true);
+      const loadUniformHeights = loaderForSettingBool("uniformHeights", setUniformHeights, true);
+      const compactLinkPics = loaderForSettingBool("compactLinkPics", setCompactLinkPics, true);
+      const autoHideNav = loaderForSettingBool("autoHideNav", setAutoHideNav, false);
+      const preferSideBySide = loaderForSettingBool("preferSideBySide", setPreferSideBySide, false);
+      const disableSideBySide = loaderForSettingBool("disableSideBySide", setDisableSideBySide, false);
+      const autoCollapseComments = loaderForSettingBool("autoCollapseComments", setAutoCollapseComments, true);
 
       //things we dont' really need loaded before posts are loaded
-      loadRibbonCollapseOnly();
+      autoCollapseComments(); 
+      disableSideBySide(); 
+      loadAutoRead();
       loadCollapseChildrenOnly();
       loadDefaultCollapseChildren();
-      loadShowUserIcons();
-      loadShowUserFlairs();
       loadExpandedSubPane();
-      loadAutoRead();
+      loadRibbonCollapseOnly();
+      loadShowUserFlairs();
+      loadShowUserIcons();
       preferSideBySide(); 
-      disableSideBySide(); 
-      autoCollapseComments(); 
 
       //things we need loaded before posts are rendered
-      let autohidenav = autoHideNav();
-      let compactlinkpics = compactLinkPics();
-      let autoseen = loadAutoSeen();
-      let autorefreshfeed = autoRefreshFeed();
-      let autorefreshcomments = autoRefreshComments();
-      let asktoupdatefeed = askToUpdateFeed();
-      let refreshonfocus = refreshOnFocus();
-      let fastrefreshinterval = fastRefreshInterval();
-      let slowrefreshinterval = slowRefreshInterval();
-      let defaultsortcomments = defaultSortComments();
-      let autoplayinterval = autoPlayInterval();
-      let waitforvidinterval = waitForVidInterval();
-      let uniformheights = loadUniformHeights();
-      let volumes = loadVolume();
-      let nsfw = loadNSFW();
-      let autoplay = loadAutoplay();
-      let hoverplay = loadHoverPlay();
-      let mediaonly = loadMediaOnly();
-      let audiohover = audioOnHover();
-      let columnoverride = columnOverride();
-      let savewideui = savedWideUI();
-      //let syncwideui = syncWideUI();
-      let postwideui = postWideUI();
-      let wideUI = loadWideUI();
-      let cardstyle = loadCardStyle();
-      let localfavorites = loadLocalFavoriteSubs();
-      let localsubs = loadLocalSubs();
-      let imgfilter = loadImgFilter();
-      let imgportraitfilter = loadImgPortraitFilter();
-      let imglandscapefilter = loadImgLandscapeFilter();
-      let vidfilter = loadVidFilter();
-      let linkfilter = loadLinkFilter();
-      let selffilter = loadSelfFilter();
-      let readfilter = loadReadFilter();
-      let seenfilter = loadSeenFilter();
-      let showflairs = loadShowFlairs();
-      let showawardings = loadShowAwardings();
-      let infiniteLoading = loadInfiniteLoading();
-      let dimread = loadDimRead();
-      let disableembeds = loadDisableEmbeds();
-      let preferembeds = loadPreferEmbeds();
-      let loadembedseverywhere = loadEmbedsEverywhere();
       await Promise.all([
-        autoplayinterval,
-        waitforvidinterval,
-        uniformheights,
-        volumes,
-        compactlinkpics,
-        autoseen,
-        autorefreshfeed,
-        autorefreshcomments,
-        asktoupdatefeed,
-        refreshonfocus,
-        fastrefreshinterval,
-        slowrefreshinterval,
-        defaultsortcomments,
-        nsfw,
-        autoplay,
-        hoverplay,
-        mediaonly,
-        audiohover,
-        columnoverride,
-        savewideui,
-        //syncwideui,
-        postwideui,
-        wideUI,
-        cardstyle,
-        localfavorites,
-        localsubs,
-        imgfilter,
-        imgportraitfilter,
-        imglandscapefilter,
-        vidfilter,
-        linkfilter,
-        selffilter,
-        readfilter,
-        seenfilter,
-        showflairs,
-        showawardings,
-        infiniteLoading,
-        dimread,
-        disableembeds,
-        preferembeds,
-        loadembedseverywhere,
-        autohidenav,
+        //syncWideUI(),
+        askToUpdateFeed(),
+        audioOnHover(),
+        autoHideNav(),
+        autoPlayInterval(),
+        autoRefreshComments(),
+        autoRefreshFeed(),
+        columnOverride(),
+        compactLinkPics(),
+        defaultSortComments(),
+        fastRefreshInterval(),
+        loadAutoSeen(),
+        loadAutoplay(),
+        loadCardStyle(),
+        loadDimRead(),
+        loadDisableEmbeds(),
+        loadEmbedsEverywhere(),
+        loadHoverPlay(),
+        loadImgFilter(),
+        loadImgLandscapeFilter(),
+        loadImgPortraitFilter(),
+        loadInfiniteLoading(),
+        loadLinkFilter(),
+        loadLocalFavoriteSubs(),
+        loadLocalSubs(),
+        loadMediaOnly(),
+        loadNSFW(),
+        loadNsfwPostFilter(),
+        loadPreferEmbeds(),
+        loadReadFilter(),
+        loadSeenFilter(),
+        loadSelfFilter(),
+        loadShowAwardings(),
+        loadShowFlairs(),
+        loadUniformHeights(),
+        loadVidFilter(),
+        loadVolume(),
+        loadWideUI(),
+        postWideUI(),
+        refreshOnFocus(),
+        savedWideUI(),
+        slowRefreshInterval(),
+        waitForVidInterval(),
       ]);
 
       applyFilters(filters);
@@ -1226,197 +826,72 @@ export const MainProvider = ({ children }) => {
 
     getSettings();
   }, []);
-  useEffect(() => {
-    if (autoCollapseComments !== undefined) {
-      localForage.setItem("autoCollapseComments", autoCollapseComments);
-    }
-  }, [autoCollapseComments]);
-  useEffect(() => {
-    if (preferSideBySide !== undefined) {
-      localForage.setItem("preferSideBySide", preferSideBySide);
-    }
-  }, [preferSideBySide]);
-  useEffect(() => {
-    if (disableSideBySide !== undefined) {
-      localForage.setItem("disableSideBySide", disableSideBySide);
-    }
-  }, [disableSideBySide]);
-  useEffect(() => {
-    if (autoHideNav !== undefined) {
-      localForage.setItem("autoHideNav", autoHideNav);
-    }
-  }, [autoHideNav]);
-  useEffect(() => {
-    if (uniformHeights !== undefined) {
-      localForage.setItem("uniformHeights", uniformHeights);
-    }
-  }, [uniformHeights]);
 
-  useEffect(() => {
-    if (waitForVidInterval !== undefined) {
-      localForage.setItem("waitForVidInterval", waitForVidInterval);
+  function saveSettings(settings) {
+    function saveSetting(s: any, name: string) {
+      useEffect(() => {
+        if (s !== undefined) {
+          localForage.setItem(name, s);
+        }
+      }, [s]);
     }
-  }, [waitForVidInterval]);
-  useEffect(() => {
-    if (autoPlayInterval !== undefined) {
-      localForage.setItem("autoPlayInterval", autoPlayInterval);
+    Object.keys(settings).map((name) => saveSetting(settings[name], name))
+  }
+
+  saveSettings(
+    settings = {
+      autoCollapseComments,
+      preferSideBySide,
+      disableSideBySide,
+      autoHideNav,
+      uniformHeights,
+      waitForVidInterval,
+      autoPlayInterval,
+      compactLinkPics,
+      slowRefreshInterval,
+      fastRefreshInterval,
+      defaultSortComments,
+      refreshOnFocus,
+      askToUpdateFeed,
+      autoRefreshComments,
+      autoRefreshFeed,
+      disableEmbeds,
+      preferEmbeds,
+      embedsEverywhere,
+      autoSeen,
+      autoRead,
+      dimRead,
+      infiniteLoading,
+      expandedSubPane,
+      showUserFlairs,
+      showFlairs,
+      showAwardings,
+      showUserIcons,
+      ribbonCollapseOnly,
+      defaultCollapseChildren,
+      collapseChildrenOnly,
+      seenFilter,
+      readFilter,
+      imgFilter,
+      imgPortraitFilter,
+      imgLandscapeFilter,
+      nsfwPostFilter,
+      vidFilter,
+      linkFilter,
+      selfFilter,
+      nsfw,
+      autoplay,
+      volume,
+      hoverplay,
+      columnOverride,
+      saveWideUI,
+      syncWideUI,
+      postWideUI,
+      wideUI,
+      mediaOnly,
+      audioOnHover,
     }
-  }, [autoPlayInterval]);
-  useEffect(() => {
-    if (compactLinkPics !== undefined) {
-      localForage.setItem("compactLinkPics", compactLinkPics);
-    }
-  }, [compactLinkPics]);
-  useEffect(() => {
-    if (slowRefreshInterval !== undefined) {
-      localForage.setItem("slowRefreshInterval", slowRefreshInterval);
-    }
-  }, [slowRefreshInterval]);
-  useEffect(() => {
-    if (fastRefreshInterval !== undefined) {
-      localForage.setItem("fastRefreshInterval", fastRefreshInterval);
-    }
-  }, [fastRefreshInterval]);
-  useEffect(() => {
-      if (defaultSortComments !== undefined) {
-          localForage.setItem("defaultSortComments", defaultSortComments);
-      }
-  }, [defaultSortComments]);
-  useEffect(() => {
-    if (refreshOnFocus !== undefined) {
-      localForage.setItem("refreshOnFocus", refreshOnFocus);
-    }
-  }, [refreshOnFocus]);
-  useEffect(() => {
-    if (askToUpdateFeed !== undefined) {
-      localForage.setItem("askToUpdateFeed", askToUpdateFeed);
-    }
-  }, [askToUpdateFeed]);
-  useEffect(() => {
-    if (autoRefreshComments !== undefined) {
-      localForage.setItem("autoRefreshComments", autoRefreshComments);
-    }
-  }, [autoRefreshComments]);
-  useEffect(() => {
-    if (autoRefreshFeed !== undefined) {
-      localForage.setItem("autoRefreshFeed", autoRefreshFeed);
-    }
-  }, [autoRefreshFeed]);
-  useEffect(() => {
-    if (disableEmbeds !== undefined) {
-      localForage.setItem("disableEmbeds", disableEmbeds);
-    }
-  }, [disableEmbeds]);
-  useEffect(() => {
-    if (preferEmbeds !== undefined) {
-      localForage.setItem("preferEmbeds", preferEmbeds);
-    }
-  }, [preferEmbeds]);
-  useEffect(() => {
-    if (embedsEverywhere !== undefined) {
-      localForage.setItem("embedsEverywhere", embedsEverywhere);
-    }
-  }, [embedsEverywhere]);
-  useEffect(() => {
-    if (autoSeen !== undefined) {
-      localForage.setItem("autoSeen", autoSeen);
-    }
-  }, [autoSeen]);
-  useEffect(() => {
-    if (autoRead !== undefined) {
-      localForage.setItem("autoRead", autoRead);
-    }
-  }, [autoRead]);
-  useEffect(() => {
-    if (dimRead !== undefined) {
-      localForage.setItem("dimRead", dimRead);
-    }
-  }, [dimRead]);
-  useEffect(() => {
-    if (infiniteLoading !== undefined) {
-      localForage.setItem("infiniteLoading", infiniteLoading);
-    }
-  }, [infiniteLoading]);
-  useEffect(() => {
-    if (expandedSubPane !== undefined) {
-      localForage.setItem("expandedSubPane", expandedSubPane);
-    }
-  }, [expandedSubPane]);
-  useEffect(() => {
-    if (showUserFlairs !== undefined) {
-      localForage.setItem("showUserFlairs", showUserFlairs);
-    }
-  }, [showUserFlairs]);
-  useEffect(() => {
-    if (showFlairs !== undefined) {
-      localForage.setItem("showFlairs", showFlairs);
-    }
-  }, [showFlairs]);
-  useEffect(() => {
-    if (showAwardings !== undefined) {
-      localForage.setItem("showAwardings", showAwardings);
-    }
-  }, [showAwardings]);
-  useEffect(() => {
-    if (showUserIcons !== undefined) {
-      localForage.setItem("showUserIcons", showUserIcons);
-    }
-  }, [showUserIcons]);
-  useEffect(() => {
-    if (ribbonCollapseOnly !== undefined) {
-      localForage.setItem("ribbonCollapseOnly", ribbonCollapseOnly);
-    }
-  }, [ribbonCollapseOnly]);
-  useEffect(() => {
-    if (defaultCollapseChildren !== undefined) {
-      localForage.setItem("defaultCollapseChildren", defaultCollapseChildren);
-    }
-  }, [defaultCollapseChildren]);
-  useEffect(() => {
-    if (collapseChildrenOnly !== undefined) {
-      localForage.setItem("collapseChildrenOnly", collapseChildrenOnly);
-    }
-  }, [collapseChildrenOnly]);
-  useEffect(() => {
-    if (seenFilter !== undefined) {
-      localForage.setItem("seenFilter", seenFilter);
-    }
-  }, [seenFilter]);
-  useEffect(() => {
-    if (readFilter !== undefined) {
-      localForage.setItem("readFilter", readFilter);
-    }
-  }, [readFilter]);
-  useEffect(() => {
-    if (imgFilter !== undefined) {
-      localForage.setItem("imgFilter", imgFilter);
-    }
-  }, [imgFilter]);
-  useEffect(() => {
-    if (imgPortraitFilter !== undefined) {
-      localForage.setItem("imgPortraitFilter", imgPortraitFilter);
-    }
-  }, [imgPortraitFilter]);
-  useEffect(() => {
-    if (imgLandscapeFilter !== undefined) {
-      localForage.setItem("imgLandscapeFilter", imgLandscapeFilter);
-    }
-  }, [imgLandscapeFilter]);
-  useEffect(() => {
-    if (vidFilter !== undefined) {
-      localForage.setItem("vidFilter", vidFilter);
-    }
-  }, [vidFilter]);
-  useEffect(() => {
-    if (linkFilter !== undefined) {
-      localForage.setItem("linkFilter", linkFilter);
-    }
-  }, [linkFilter]);
-  useEffect(() => {
-    if (selfFilter !== undefined) {
-      localForage.setItem("selfFilter", selfFilter);
-    }
-  }, [selfFilter]);
+  )
 
   useEffect(() => {
     if (localSubs?.length > 0) {
@@ -1434,6 +909,7 @@ export const MainProvider = ({ children }) => {
       document.cookie = `localSubs=false;samesite=strict`;
     }
   }, [localSubs]);
+
   useEffect(() => {
     if (localFavoriteSubs?.length > 0) {
       localForage.setItem("localFavoriteSubs", localFavoriteSubs);
@@ -1441,65 +917,10 @@ export const MainProvider = ({ children }) => {
   }, [localFavoriteSubs]);
 
   useEffect(() => {
-    if (nsfw !== undefined) {
-      localForage.setItem("nsfw", nsfw);
-    }
-  }, [nsfw]);
-  useEffect(() => {
-    if (autoplay !== undefined) {
-      localForage.setItem("autoplay", autoplay);
-    }
-  }, [autoplay]);
-  useEffect(() => {
-    if (volume !== undefined) {
-      localForage.setItem("volume", volume);
-    }
-  }, [volume]);
-  useEffect(() => {
-    if (hoverplay !== undefined) {
-      localForage.setItem("hoverplay", hoverplay);
-    }
-  }, [hoverplay]);
-  useEffect(() => {
-    if (columnOverride !== undefined) {
-      localForage.setItem("columnOverride", columnOverride);
-    }
-  }, [columnOverride]);
-  useEffect(() => {
-    if (saveWideUI !== undefined) {
-      localForage.setItem("saveWideUI", saveWideUI);
-    }
-  }, [saveWideUI]);
-  useEffect(() => {
-    if (syncWideUI !== undefined) {
-      localForage.setItem("syncWideUI", syncWideUI);
-    }
-  }, [syncWideUI]);
-  useEffect(() => {
-    if (postWideUI !== undefined) {
-      localForage.setItem("postWideUI", postWideUI);
-    }
-  }, [postWideUI]);
-  useEffect(() => {
-    if (wideUI !== undefined) {
-      localForage.setItem("wideUI", wideUI);
-    }
-  }, [wideUI]);
-  useEffect(() => {
-    if (mediaOnly !== undefined) {
-      localForage.setItem("mediaOnly", mediaOnly);
-    }
-  }, [mediaOnly]);
-  useEffect(() => {
     if (cardStyle?.length > 0) {
       localForage.setItem("cardStyle", cardStyle);
     }
   }, [cardStyle]);
-  useEffect(() => {
-    if (audioOnHover !== undefined) {
-      localForage.setItem("audioOnHover", audioOnHover);
-    }
-  }, [audioOnHover]);
 
   return (
     <MainContext.Provider

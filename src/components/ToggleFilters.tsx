@@ -59,6 +59,10 @@ const ToggleFilters = ({ filter, withSubtext = false, quickToggle = false}) => {
         setSubtext("Filter or show images / videos with portrait orientation");
         f = "imgPortraitFilter";
         break;
+      case "nsfw_filter":
+        setSubtext("Filter or show nsfw posts");
+        f = "nsfwPostFilter";
+        break;
       case "landscape":
         setSubtext("Filter or show images / videos with landscape orientation");
         f = "imgLandscapeFilter";
