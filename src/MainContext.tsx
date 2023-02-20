@@ -531,7 +531,7 @@ export const MainProvider = ({ children }) => {
     const getSettings = async () => {
       //fall back to localstorage for legacy settings
       let fallback = false;
-      function loaderForLegacySetting(name: string, setter: Function, prefer: boolean = true): Function {
+      function loaderForLegacySetting(name: string, setter: Function, prefer: boolean = true): () => Promise<void> {
         return async () => {
           let saved = await localForage.getItem(name);
           if (saved !== null) {
@@ -571,10 +571,10 @@ export const MainProvider = ({ children }) => {
         }
       };
 
-      const savedWideUI = loaderForLegacySetting("saveWideUI", setSaveWideUI, prefers = false);
-      // const syncWideUI = loaderForLegacySetting("syncWideUI", setSyncWideUI, prefers = false);
-      const postWideUI = loaderForLegacySetting("postWideUI", setPostWideUI, prefers = false);
-      const loadWideUI = loaderForLegacySetting("wideUI", setWideUI, prefers = false);
+      const savedWideUI = loaderForLegacySetting("saveWideUI", setSaveWideUI, false);
+      // const syncWideUI = loaderForLegacySetting("syncWideUI", setSyncWideUI, false);
+      const postWideUI = loaderForLegacySetting("postWideUI", setPostWideUI, false);
+      const loadWideUI = loaderForLegacySetting("wideUI", setWideUI, false);
 
       const loadCardStyle = async () => {
         let saved_cardStyle: string = await localForage.getItem("cardStyle");
@@ -621,7 +621,7 @@ export const MainProvider = ({ children }) => {
         vidFilter: true,
       };
 
-      function loaderForLegacyFilter (name: string, setter: Function): Function {
+      function loaderForLegacyFilter (name: string, setter: Function): () => Promise<void> {
         return async () => {
           let saved_value = await localForage.getItem(name);
           if (saved_value !== null) {
@@ -654,7 +654,7 @@ export const MainProvider = ({ children }) => {
       const loadVidFilter = loaderForLegacyFilter("vidFilter", setVidFilter);
 
       //new setting
-      function loaderForFilter (name: string, setter: Function): Function {
+      function loaderForFilter (name: string, setter: Function): () => Promise<void> {
         return async () => {
           let saved = await localForage.getItem(name);
           if (saved === false) {
@@ -670,7 +670,7 @@ export const MainProvider = ({ children }) => {
       const loadNsfwPostFilter = loaderForFilter("nsfwPostFilter", setNsfwPostFilter);
 
       //new settings don't need localstorage fallback..
-      function loaderForSettingBool(name: string, setter: Function, fallback: boolean): Function {
+      function loaderForSettingBool(name: string, setter: Function, fallback: boolean): () => Promise<void> {
         return async () => {
           let saved = await localForage.getItem(name);
           saved === !fallback
