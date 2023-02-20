@@ -974,6 +974,7 @@ export const MainProvider = ({ children }) => {
         loading,
         setLoading,
         toggleFilter,
+        nsfwPostFilter,
         seenFilter,
         readFilter,
         imgFilter,
