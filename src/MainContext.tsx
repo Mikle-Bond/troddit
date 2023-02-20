@@ -531,7 +531,7 @@ export const MainProvider = ({ children }) => {
     const getSettings = async () => {
       //fall back to localstorage for legacy settings
       let fallback = false;
-      function loaderForLegacySetting(name: string, setter: Function, prefer: boolean = true): Promise<void> {
+      function loaderForLegacySetting(name: string, setter: Function, prefer: boolean = true): Function {
         return async () => {
           let saved = await localForage.getItem(name);
           if (saved !== null) {
@@ -621,7 +621,7 @@ export const MainProvider = ({ children }) => {
         vidFilter: true,
       };
 
-      function loaderForLegacyFilter (name: string, setter: Function): Promise<void> {
+      function loaderForLegacyFilter (name: string, setter: Function): Function {
         return async () => {
           let saved_value = await localForage.getItem(name);
           if (saved_value !== null) {
@@ -654,7 +654,7 @@ export const MainProvider = ({ children }) => {
       const loadVidFilter = loaderForLegacyFilter("vidFilter", setVidFilter);
 
       //new setting
-      function loaderForFilter (name: string, setter: Function): Promise<void> {
+      function loaderForFilter (name: string, setter: Function): Function {
         return async () => {
           let saved = await localForage.getItem(name);
           if (saved === false) {
@@ -670,7 +670,7 @@ export const MainProvider = ({ children }) => {
       const loadNsfwPostFilter = loaderForFilter("nsfwPostFilter", setNsfwPostFilter);
 
       //new settings don't need localstorage fallback..
-      function loaderForSettingBool(name: string, setter: Function, fallback: boolean): Promise<void> {
+      function loaderForSettingBool(name: string, setter: Function, fallback: boolean): Function {
         return async () => {
           let saved = await localForage.getItem(name);
           saved === !fallback
