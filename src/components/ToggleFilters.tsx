@@ -76,6 +76,8 @@ const ToggleFilters = ({ filter, withSubtext = false, quickToggle = false}) => {
           ? "self posts"
           : filter === "read"
           ? "read posts"
+          : filter === "nsfw_filter"
+          ? "over 18"
           : filter === "portrait" || filter === "landscape"
           ? `${filter} images/videos`
           : filter

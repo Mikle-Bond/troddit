@@ -115,7 +115,7 @@ const NavBar = ({ toggleSideNav = 0 }) => {
       <header
         className={
           `${hidden ? "-translate-y-full" : " translate-y-0 "}` +
-          " z-50 fixed top-0 transition ease-in-out transform h-12 w-screen  " +
+          " z-50 fixed top-0 transition ease-in-out transform h-12 w-full  " +
           (hidden ? " duration-500" : " duration-0")
         }
       >
