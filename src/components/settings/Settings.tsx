@@ -188,6 +188,7 @@ const Settings = () => {
           "landscape",
           "read",
           "seen",
+          "nsfw_filter",
         ].map((f, i) => (
           <div key={f}>
             <ToggleFilters filter={f} withSubtext={true} quickToggle={true} />

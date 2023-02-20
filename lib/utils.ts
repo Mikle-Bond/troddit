@@ -649,6 +649,9 @@ export const filterPosts = async (
     ) {
       return false;
     }
+    if (checkSubs && !nsfwPostFilter && (d?.over_18)) {
+      return false;
+    }
 
     //if filtering read, no need for other content checks
     if (!seenFilter && (await localSeen.getItem(d?.name))) {
@@ -656,10 +659,6 @@ export const filterPosts = async (
       return false;
     }
     if (!readFilter && (await localRead.getItem(d?.name))) {
-      filtercount += 1;
-      return false;
-    }
-    if (!nsfwPostFilter && (d?.over_18)) {
       filtercount += 1;
       return false;
     }
