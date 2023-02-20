@@ -827,71 +827,65 @@ export const MainProvider = ({ children }) => {
     getSettings();
   }, []);
 
-  function saveSettings(settings) {
-    function saveSetting(s: any, name: string) {
-      useEffect(() => {
-        if (s !== undefined) {
-          localForage.setItem(name, s);
+  function saveSetting(setting: Object): () => void {
+    const [name, value] = Object.entries(setting)[0];
+    return () => {
+        if (value !== undefined) {
+          localForage.setItem(name, value);
         }
-      }, [s]);
     }
-    Object.keys(settings).map((name) => saveSetting(settings[name], name))
   }
 
-  saveSettings(
-    settings = {
-      autoCollapseComments,
-      preferSideBySide,
-      disableSideBySide,
-      autoHideNav,
-      uniformHeights,
-      waitForVidInterval,
-      autoPlayInterval,
-      compactLinkPics,
-      slowRefreshInterval,
-      fastRefreshInterval,
-      defaultSortComments,
-      refreshOnFocus,
-      askToUpdateFeed,
-      autoRefreshComments,
-      autoRefreshFeed,
-      disableEmbeds,
-      preferEmbeds,
-      embedsEverywhere,
-      autoSeen,
-      autoRead,
-      dimRead,
-      infiniteLoading,
-      expandedSubPane,
-      showUserFlairs,
-      showFlairs,
-      showAwardings,
-      showUserIcons,
-      ribbonCollapseOnly,
-      defaultCollapseChildren,
-      collapseChildrenOnly,
-      seenFilter,
-      readFilter,
-      imgFilter,
-      imgPortraitFilter,
-      imgLandscapeFilter,
-      nsfwPostFilter,
-      vidFilter,
-      linkFilter,
-      selfFilter,
-      nsfw,
-      autoplay,
-      volume,
-      hoverplay,
-      columnOverride,
-      saveWideUI,
-      syncWideUI,
-      postWideUI,
-      wideUI,
-      mediaOnly,
-      audioOnHover,
-    }
-  )
+  useEffect(saveSetting({autoCollapseComments}), [autoCollapseComments]);
+  useEffect(saveSetting({preferSideBySide}), [preferSideBySide]);
+  useEffect(saveSetting({disableSideBySide}), [disableSideBySide]);
+  useEffect(saveSetting({autoHideNav}), [autoHideNav]);
+  useEffect(saveSetting({uniformHeights}), [uniformHeights]);
+  useEffect(saveSetting({waitForVidInterval}), [waitForVidInterval]);
+  useEffect(saveSetting({autoPlayInterval}), [autoPlayInterval]);
+  useEffect(saveSetting({compactLinkPics}), [compactLinkPics]);
+  useEffect(saveSetting({slowRefreshInterval}), [slowRefreshInterval]);
+  useEffect(saveSetting({fastRefreshInterval}), [fastRefreshInterval]);
+  useEffect(saveSetting({defaultSortComments}), [defaultSortComments]);
+  useEffect(saveSetting({refreshOnFocus}), [refreshOnFocus]);
+  useEffect(saveSetting({askToUpdateFeed}), [askToUpdateFeed]);
+  useEffect(saveSetting({autoRefreshComments}), [autoRefreshComments]);
+  useEffect(saveSetting({autoRefreshFeed}), [autoRefreshFeed]);
+  useEffect(saveSetting({disableEmbeds}), [disableEmbeds]);
+  useEffect(saveSetting({preferEmbeds}), [preferEmbeds]);
+  useEffect(saveSetting({embedsEverywhere}), [embedsEverywhere]);
+  useEffect(saveSetting({autoSeen}), [autoSeen]);
+  useEffect(saveSetting({autoRead}), [autoRead]);
+  useEffect(saveSetting({dimRead}), [dimRead]);
+  useEffect(saveSetting({infiniteLoading}), [infiniteLoading]);
+  useEffect(saveSetting({expandedSubPane}), [expandedSubPane]);
+  useEffect(saveSetting({showUserFlairs}), [showUserFlairs]);
+  useEffect(saveSetting({showFlairs}), [showFlairs]);
+  useEffect(saveSetting({showAwardings}), [showAwardings]);
+  useEffect(saveSetting({showUserIcons}), [showUserIcons]);
+  useEffect(saveSetting({ribbonCollapseOnly}), [ribbonCollapseOnly]);
+  useEffect(saveSetting({defaultCollapseChildren}), [defaultCollapseChildren]);
+  useEffect(saveSetting({collapseChildrenOnly}), [collapseChildrenOnly]);
+  useEffect(saveSetting({seenFilter}), [seenFilter]);
+  useEffect(saveSetting({readFilter}), [readFilter]);
+  useEffect(saveSetting({imgFilter}), [imgFilter]);
+  useEffect(saveSetting({imgPortraitFilter}), [imgPortraitFilter]);
+  useEffect(saveSetting({imgLandscapeFilter}), [imgLandscapeFilter]);
+  useEffect(saveSetting({nsfwPostFilter}), [nsfwPostFilter]);
+  useEffect(saveSetting({vidFilter}), [vidFilter]);
+  useEffect(saveSetting({linkFilter}), [linkFilter]);
+  useEffect(saveSetting({selfFilter}), [selfFilter]);
+  useEffect(saveSetting({nsfw}), [nsfw]);
+  useEffect(saveSetting({autoplay}), [autoplay]);
+  useEffect(saveSetting({volume}), [volume]);
+  useEffect(saveSetting({hoverplay}), [hoverplay]);
+  useEffect(saveSetting({columnOverride}), [columnOverride]);
+  useEffect(saveSetting({saveWideUI}), [saveWideUI]);
+  useEffect(saveSetting({syncWideUI}), [syncWideUI]);
+  useEffect(saveSetting({postWideUI}), [postWideUI]);
+  useEffect(saveSetting({wideUI}), [wideUI]);
+  useEffect(saveSetting({mediaOnly}), [mediaOnly]);
+  useEffect(saveSetting({audioOnHover}), [audioOnHover]);
 
   useEffect(() => {
     if (localSubs?.length > 0) {
